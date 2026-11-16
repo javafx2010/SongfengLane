@@ -25,7 +25,9 @@ VOICES = {
     "D": ("zh-CN-YunxiaNeural",   "+0%",  "+0Hz"),   # 弟弟
     "Y": ("zh-CN-YunjianNeural",  "+0%",  "+0Hz"),   # 邮递员
     "F": ("zh-CN-XiaoxiaoNeural", "+12%", "+10Hz"),  # 女群杂
-    "O": ("zh-CN-YunjianNeural",  "+3%",  "+0Hz"),   # 男群杂
+    "O": ("zh-CN-YunjianNeural",  "+3%",  "+0Hz"),   # 男群杂（老韩等）
+    "T": ("zh-CN-XiaoxiaoNeural", "-10%", "+0Hz"),   # 吴老师
+    "J": ("zh-CN-XiaoxiaoNeural", "+5%",  "+8Hz"),   # 户籍民警
 }
 
 GAP_SEC = 0.45          # 段间静音
