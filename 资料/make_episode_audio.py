@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """edge-tts 分角色配音合成脚本（可复用于全书各章）。
 
-用法：python 资料/make_episode_audio.py 资料/配音稿_第001章.txt
+用法：python 资料/make_episode_audio.py 资料/配音稿_第006章.txt
 依赖：edge-tts（已装入 F:\\ComfyUI\\venv）、ffmpeg（PATH）。
 输入：配音标注稿（每段一行，行首 [角色代码]，代码见 VOICES）。
-输出：音频/卷一/第001章_十八岁的巷口.mp3
+输出：音频/卷一/第006章_十八岁的巷口.mp3
 """
 import asyncio
 import shutil
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import edge_tts
 
-# 角色 → 音色/语速/音高（2026-11-17 首次用于第001章）
+# 角色 → 音色/语速/音高（2026-11-17 首次用于第006章）
 VOICES = {
     "N": ("zh-CN-XiaoxiaoNeural", "-8%",  "+0Hz"),   # 旁白
     "S": ("zh-CN-XiaoyiNeural",   "-12%", "+0Hz"),   # 苏冬梅
@@ -132,11 +132,11 @@ async def main(script_path: Path, out_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    script = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE / "资料" / "配音稿_第001章.txt"
+    script = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE / "资料" / "配音稿_第006章.txt"
     stem = script.stem.replace("配音稿_", "")
     chapter_no = stem.split("_")[0] if "_" in stem else stem
-    # 音频/卷一/第001章_十八岁的巷口.mp3（章名从配音稿首段不可得，固定命名规则：第NNN章）
-    title_map = {"第001章": "第001章_十八岁的巷口"}
+    # 音频/卷一/第006章_十八岁的巷口.mp3（章名从配音稿首段不可得，固定命名规则：第NNN章）
+    title_map = {"第006章": "第006章_十八岁的巷口"}
     name = title_map.get(chapter_no, chapter_no)
     out = BASE / "音频" / "卷一" / f"{name}.mp3"
     asyncio.run(main(script, out))

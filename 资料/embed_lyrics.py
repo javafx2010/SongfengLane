@@ -36,6 +36,6 @@ def embed(mp3_path: Path, lrc_path: Path) -> None:
 
 if __name__ == "__main__":
     mp3 = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(
-        r"e:\OneDrive\Create\松风巷的女儿\音频\卷一\第001章_十八岁的巷口.mp3")
+        r"e:\OneDrive\Create\松风巷的女儿\音频\卷一\第006章_十八岁的巷口.mp3")
     lrc = Path(sys.argv[2]) if len(sys.argv) > 2 else mp3.with_suffix(".lrc")
     embed(mp3, lrc)

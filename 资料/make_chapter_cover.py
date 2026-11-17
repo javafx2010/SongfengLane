@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """章节封面出图脚本（复用整书封面工作流，按章替换提示词）。
 
-用法：python 资料/make_chapter_cover.py 第001章 4
+用法：python 资料/make_chapter_cover.py 第006章 4
 依赖：make_cover.py（同一目录）、ComfyUI 运行于 127.0.0.1:8188。
 输出：封面/章节/<章名>/cover_*.png
 """
@@ -14,7 +14,7 @@ import make_cover as mc
 
 # 各章场景提示词（画风锁定：meinamix 暖巷插画风，2026-11-16 用户定稿）
 CHAPTER_PROMPTS = {
-    "第001章": (
+    "第006章": (
         "masterpiece, best quality, vertical illustration, "
         "chinese old narrow alley in early morning, soft golden dawn light, "
         "wet flagstone path, weathered grey brick wall with laundry lines, "
@@ -57,6 +57,6 @@ async def run(chapter: str, count: int) -> None:
 
 
 if __name__ == "__main__":
-    ch = sys.argv[1] if len(sys.argv) > 1 else "第001章"
+    ch = sys.argv[1] if len(sys.argv) > 1 else "第006章"
     n = int(sys.argv[2]) if len(sys.argv) > 2 else 4
     asyncio.run(run(ch, n))
