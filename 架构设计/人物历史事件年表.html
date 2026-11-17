@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《松风巷的女儿》人物历史事件年表（1992—2041）</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0e0f13; color:#d8d3c8; font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
+  header { padding:36px 0 10px; text-align:center; }
+  header h1 { font-size:26px; color:#e8b4b8; letter-spacing:2px; }
+  header p { color:#8a8578; font-size:13px; margin-top:8px; }
+  #filters { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; padding:16px 20px 6px; }
+  .chip { background:#1a1c24; border:1px solid #343848; color:#b8b2a4; border-radius:16px; padding:6px 14px; font-size:13px; cursor:pointer; transition:.15s; }
+  .chip:hover { border-color:#e8b4b8; color:#fff; }
+  .chip.active { background:#e8b4b8; border-color:#e8b4b8; color:#14161d; font-weight:bold; }
+  .era-chip { background:#1a1c24; border-style:dashed; }
+  #stats { text-align:center; color:#5a5850; font-size:12px; padding:6px 0 18px; }
+  #timeline { max-width:860px; margin:0 auto; padding:0 20px 80px; position:relative; }
+  #timeline::before { content:""; position:absolute; left:120px; top:0; bottom:0; width:2px; background:#262935; }
+  .event { position:relative; margin-bottom:26px; padding-left:170px; cursor:default; }
+  .event .year { position:absolute; left:0; top:0; width:100px; text-align:right; font-size:18px; font-weight:bold; color:#e0a458; }
+  .event .dot { position:absolute; left:113px; top:8px; width:16px; height:16px; border-radius:50%; background:#0e0f13; border:3px solid #e0a458; }
+  .event.era1 .year, .event.era1 .dot { border-color:#8a8578; color:#8a8578; }
+  .event.era3 .year, .event.era3 .dot { border-color:#7fc8a9; color:#7fc8a9; }
+  .event.era2 { }
+  .card { background:#14161d; border:1px solid #262935; border-radius:10px; padding:14px 18px; transition:.15s; }
+  .event:hover .card { border-color:#4a4e60; background:#181a23; }
+  .card .tags { margin-bottom:8px; }
+  .tag { display:inline-block; font-size:11px; padding:2px 9px; border-radius:10px; margin-right:6px; margin-bottom:4px; }
+  .card p { font-size:14px; line-height:1.9; color:#b8b2a4; }
+  .card p b { color:#e8b4b8; }
+  .era-head { position:relative; margin:44px 0 26px; padding-left:170px; }
+  .era-head h2 { font-size:16px; color:#d8d3c8; letter-spacing:4px; }
+  .era-head .sub { font-size:12px; color:#5a5850; margin-top:4px; }
+  .hidden { display:none; }
+  @media (max-width:640px){
+    #timeline::before { left:60px; }
+    .event { padding-left:100px; }
+    .event .year { width:44px; font-size:14px; }
+    .event .dot { left:55px; }
+    .era-head { padding-left:100px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>人物历史事件年表</h1>
+  <p>1992 — 2041 ｜ 年龄基准：苏冬梅1993 · 苏冬生1999 · 徐卫东1995 · 程雪见1996 · 苏嘉禾2008 · 周念2024</p>
+  <p>写作纪律：以年表校正年龄，以章节校正事件，不得为情节漂亮改年份。</p>
+</header>
+<div id="filters"></div>
+<div id="stats"></div>
+<div id="timeline"></div>
+<script>
+const PEOPLE = {
+  "苏冬梅":"#e8b4b8","苏冬生":"#e0a458","周惠兰":"#e0a458","苏德海":"#e0a458","徐远山":"#e0a458",
+  "程永年":"#e0a458","苏万山":"#e0a458","丁桂宁":"#e0a458","陈九":"#6f9ceb","周守青":"#6f9ceb",
+  "顾怀山":"#6f9ceb","钱仲文":"#6f9ceb","马库斯":"#6f9ceb","许家平":"#6f9ceb",
+  "姜采薇":"#c9a0dc","温以苓":"#c9a0dc","叶曼君":"#7fc8a9","卢雪梅":"#7fc8a9","林小满":"#7fc8a9",
+  "岑青桐":"#7fc8a9","周念":"#f2d0a4","苏嘉禾":"#f2d0a4","徐卫东":"#f2d0a4","程雪见":"#f2d0a4"
+};
+const EVENTS = [
+ {y:1992, era:1, who:["周惠兰","徐远山","苏德海"], t:"周惠兰在城外货运站认识跑长途的司机徐远山。他一个月来一趟，带一袋苹果，车停在巷子外，按三下喇叭。整条巷子都听过那句「这丫头不像苏家的」。苏德海那年刚升一级。"},
+ {y:1993, era:1, who:["苏冬梅","周惠兰","苏德海","徐远山"], t:"<b>苏冬梅出生。</b>苏德海算日子、算血型、算行踪，从此装作不知道。徐远山来过一次，站在门口没进去；周惠兰在他车上问「你说，她是不是你的」，他没有回答。但他不是她的父亲，只是一句闲话的影子。"},
+ {y:"1994—97", era:1, who:["徐远山","程永年","苏德海"], t:"徐远山换了旧东风，仍按月来。程永年调进厂供销科。苏德海买了钢琴，家里第一次有了「楼上的样子」。"},
+ {y:1996, era:1, who:["苏德海","苏冬梅"], t:"<b>苏德海算明白了——苏冬梅是他的亲生女儿。</b>他把那两张纸看了很久，没有撕，又放回去；第二天想去抱她，手抬到一半，没有抱，从此再没抱过她。全书最大的反讽：她恨了一辈子的那个人，正是她的亲爹。"},
+ {y:1998, era:1, who:["周惠兰","程永年","徐远山","苏德海"], t:"周惠兰与程永年来往。徐远山跑南线，来得少了。苏德海在饭桌上第一次沉默得反常。"},
+ {y:1999, era:1, who:["苏冬生","苏德海","苏万山","周惠兰"], t:"<b>苏冬生出生。</b>弟弟被举报超生，苏德海丢公职、退房，全家搬回松风巷老宅。苏万山抱起孙子，说了一句「这孩子不像苏家的」。"},
+ {y:2000, era:1, who:["苏德海","周惠兰","程永年","徐远山"], t:"苏德海对外说「南方有活干」，开始两头跑。周惠兰第一次向程永年开口要钱，理由是奶粉。徐远山第一次被「提醒」。"},
+ {y:2001, era:1, who:["苏万山","苏冬梅"], t:"楼房过户到苏万山名下，第一笔。苏冬梅上小学，老师夸她「不像巷子里的孩子」。"},
+ {y:2002, era:1, who:["程永年","苏冬生"], t:"第一笔存款转走。程永年寄来第一笔「择校费」，落在弟弟名下。"},
+ {y:2003, era:1, who:["苏德海"], t:"铺面过户。苏德海最后一次以丈夫身份在这个家里过年。"},
+ {y:2004, era:1, who:["苏德海","周惠兰","苏冬梅"], t:"<b>苏德海摊牌</b>，拿出用别人的血做的鉴定，两个孩子都不是他的。离婚，两个孩子都判给周惠兰；他表面净身出户、实际带走全部，半年后出国。苏冬梅十一岁，记住父亲拎着箱子出门，连头都没回。"},
+ {y:2005, era:1, who:["程永年","徐远山","周惠兰","苏冬梅"], t:"程永年与徐远山第一次坐到一张桌上，谈成「平摊成本」：按年给钱，一人一半。周惠兰的硬皮簿记下第一笔。苏冬梅在抽屉里翻到两封信，一封厚、落款姓程，一封薄、落款姓徐，她只记住厚的。"},
+ {y:2007, era:1, who:["苏德海"], t:"苏德海在国外再婚。"},
+ {y:2008, era:1, who:["苏嘉禾","周惠兰","苏冬梅","苏德海"], t:"苏嘉禾出生。周惠兰的簿子记满第一本。十五岁的苏冬梅问过他一次：「我是不是你亲生的？」他抽完一支烟，答：「你是苏家的。」——这是他一生说过的最像父亲的一句话，也是她一生最恨的一句话。"},
+ {y:2009, era:1, who:["苏冬梅","苏冬生"], t:"苏冬梅读初中，已经学会看人下菜。弟弟上小学，成绩不好，但有人替他交赞助费。"},
+ {y:2010, era:1, who:["徐远山","苏冬梅"], t:"徐远山第一次「正好」出现在她学校门口，塞给她一叠钱，说是「老乡帮忙」。"},
+ {y:2011, era:2, who:["苏冬梅","徐远山","程永年","陈九"], t:"<b>十八岁的巷口。</b>考入大学。徐远山在她报到那天帮她提了一箱行李。程永年寄来第一笔「企业奖学金」。陈九出现在巷口。"},
+ {y:2012, era:2, who:["顾怀山","卢雪梅","林小满","叶曼君","江晚棠"], t:"顾怀山进入她的生活。卢雪梅、林小满、叶曼君与她同出松风巷，命运在同一年夏天分岔。江晚棠办起第一场讲座。"},
+ {y:2013, era:2, who:["姜采薇","祁予真","苏冬梅"], t:"她第一次用美貌换东西。姜采薇成为她的军师。祁予真出现——这本书里真正的受害者。"},
+ {y:2014, era:2, who:["顾怀山","叶曼君"], t:"保研名额之争开始。她与顾怀山完成第一次交换。叶曼君成为明面上的对手。"},
+ {y:2015, era:2, who:["姜采薇","顾怀山"], t:"<b>举报信投出（第一次质变）。</b>室友被查。她拿到名额，又退学——家里只肯供弟弟。顾怀山丧妻后疏远她。退学前夜那顿饭，桌上只有筷子声。"},
+ {y:2016, era:2, who:["钱仲文","苏冬生"], t:"柜台、夜校。钱仲文递来旗袍与名片。苏冬生考上大学，学费来自「企业资助」。"},
+ {y:2017, era:2, who:["苏冬梅"], t:"她以身体换到第一个位置。她第一次说「我被骚扰了」。"},
+ {y:2018, era:2, who:["叶曼君","钱仲文","周惠兰","徐远山"], t:"与叶曼君正面竞争。替钱仲文挡酒。周惠兰第一次去堵徐远山的车。"},
+ {y:2019, era:2, who:["苏万山","苏德海"], t:"苏万山第一次中风。养老账第一次摆上桌，苏德海一分不出。"},
+ {y:2020, era:2, who:["苏冬梅"], t:"派系斗争开始。有人要她「表示态度」。"},
+ {y:2021, era:2, who:["姜采薇","苏冬梅"], t:"名单交上去。姜采薇第一个划清界限。她被推出顶账。"},
+ {y:2022, era:2, who:["徐远山","苏冬梅"], t:"收拾行李远走。车站上遇到一个跑长途的司机，帮她看行李，说了句「路上小心」——是徐远山。她出国。"},
+ {y:2023, era:2, who:["马库斯"], t:"餐馆后厨。留学生身份撑不住。依附马库斯。"},
+ {y:2024, era:2, who:["周念","周惠兰","程永年","苏德海"], t:"春第一次流产，冬早产生下一个女儿。孩子的父亲她说不清——她这一生追问自己是谁的女儿，却说不清自己女儿是谁的。母亲飞过去把孩子抱回国，对外只说帮亲戚带孩子。她给家里打电话，听见母亲在谈钱，那头是程永年的声音。此时她与苏德海在同一个国家，隔着不到四百公里。"},
+ {y:2025, era:2, who:["温以苓"], t:"医生确认很难再怀。温以苓出现，教她「包装」。她第一次学会在简历和相亲资料上都不写「有一个女儿」。"},
+ {y:2026, era:2, who:["温以苓"], t:"回国航班。温以苓为她设计「海外精英」履历。"},
+ {y:2027, era:2, who:["许家平","苏万山"], t:"邮局遇见许家平。恋爱三个月。苏万山第二次中风。"},
+ {y:2028, era:2, who:["许家平","徐卫东"], t:"婚礼。徐卫东帮她搬嫁妆，喊她「姐」。婆婆提「三代单传」。"},
+ {y:2029, era:2, who:["许家平","苏万山","周念"], t:"婆家开始追问孩子，她第一次对许家平撒谎。苏万山去世。她第一次翻出那张照片，也第一次去外城看了女儿一眼，隔着校门口没敢上去。"},
+ {y:2030, era:2, who:["许家平"], t:"她在闺蜜圈里铺「家暴」的叙事。许家平越来越软。"},
+ {y:2031, era:2, who:["程永年","周惠兰","苏德海"], t:"程永年病重。周惠兰在医院楼下等了三小时，留下一张纸走了。苏德海与程永年第三次见面（病床边那句「你比我还狠」）。"},
+ {y:2032, era:2, who:["周惠兰","程雪见"], t:"周惠兰拿钱走人，程雪见接手程氏资产。（程永年此时仍在世；原设本年病逝已按 v3 改为 2037。）"},
+ {y:2033, era:2, who:["苏冬梅","程永年","苏冬生","苏德海"], t:"<b>老宅拆迁公告。</b>她对弟弟说「爸这辈子抱过你吗」。五样东西第一次同时上桌。遗嘱宣读，问「为什么」，无人回答；去疗养院看程永年，端了一锅汤，他只说「你像你妈」。她把挂名签字、改过日期的合同连同剪过的录音递上去——<b>程永年被送进监狱，判三年。</b>"},
+ {y:2034, era:2, who:["丁桂宁","周惠兰","徐远山"], t:"丁桂宁被拆婚，干净离开。母亲打了儿子一巴掌。她去找徐远山「算账」。"},
+ {y:2035, era:2, who:["程永年","苏冬梅"], t:"程永年的案子开庭。她坐在证人席上，稳得像在念稿；没有一个人替他多说第二句话——这家人这辈子唯一一次在没有利益的情况下达成一致。"},
+ {y:2036, era:2, who:["周惠兰","周念","程永年","徐远山","苏德海","苏冬梅","苏冬生"], t:"周惠兰病逝外城，硬皮簿最后一页记的是外孙女的开销。姐弟收骨灰时，旁边站着一个十二岁的女孩——苏冬生第一次知道姐姐有个女儿。周念回到苏冬梅身边。<b>程永年出狱</b>，无人接，在门口坐到中午，回巷口看了二十分钟。徐远山把二十年的账本交给她，此后再无消息。她抵押老宅，梭哈AI。苏德海回国看了趟老宅，见锁换了，站了一会儿，转身走了。"},
+ {y:2037, era:2, who:["程永年","苏嘉禾","程雪见","苏冬生","陈九"], t:"<b>程永年死在疗养院，到死没能当面叫那个孩子一声。</b>AI路演，对面的投资人是苏嘉禾，他只问一句「你为什么要做这个」。程雪见拿协议买断苏冬生的主张。冬，四个后代坐在同一张桌上，没人说真话。<b>陈九死在日本</b>，电话是陌生女声打来的。"},
+ {y:2038, era:2, who:["苏德海","周念","苏冬梅"], t:"崩盘。她带着十四岁的周念去异国小城打工。商场玻璃门外，老人牵着孙子，他隔着玻璃叫了一声「梅梅」。她转身走了两条街。他追了两步就停住。第二天，储物间门口多了一袋橘子。"},
+ {y:2039, era:3, who:["周念"], t:"她留在那座小城做清洁，周念在店里打零工。四本账——鉴定底单、硬皮簿、没寄出的信、出账簿——第一次放进同一只抽屉，她没有打开。"},
+ {y:2040, era:3, who:["周念","苏冬梅"], t:"尾声。公交站，两个人并排坐着，一袋橘子放在中间。周念涂着口红问「妈，我们什么时候能回去」，她说「很快」。车来了，她们没上。天很蓝，蓝得像1993年那架钢琴上的漆。"}
+];
+
+const ERAS = {1:"上一代 1992—2010", 2:"七卷主体 2011—2038", 3:"尾声 2039—2041"};
+const filters = document.getElementById("filters");
+const timeline = document.getElementById("timeline");
+const stats = document.getElementById("stats");
+let activePerson = null;
+
+// 时代分隔标题 + 事件节点
+let lastEra = 0;
+EVENTS.forEach(ev => {
+  if (ev.era !== lastEra) {
+    const h = document.createElement("div");
+    h.className = "era-head";
+    h.dataset.era = ev.era;
+    h.innerHTML = `<h2>—— ${ERAS[ev.era]} ——</h2>`;
+    timeline.appendChild(h);
+    lastEra = ev.era;
+  }
+  const d = document.createElement("div");
+  d.className = "event era" + ev.era;
+  d.dataset.era = ev.era;
+  const tags = ev.who.map(w => `<span class="tag" style="background:${PEOPLE[w]}22;color:${PEOPLE[w]};border:1px solid ${PEOPLE[w]}55">${w}</span>`).join("");
+  d.innerHTML = `
+    <div class="year">${ev.y}</div>
+    <div class="dot"></div>
+    <div class="card">
+      <div class="tags">${tags}</div>
+      <p>${ev.t}</p>
+    </div>`;
+  d.dataset.people = ev.who.join(",");
+  timeline.appendChild(d);
+});
+
+// 人物筛选（含「全部」与时代筛选）
+const allChip = document.createElement("span");
+allChip.className = "chip active";
+allChip.textContent = "全部";
+allChip.onclick = () => { activePerson = null; setActive(allChip); apply(); };
+filters.appendChild(allChip);
+Object.keys(PEOPLE).forEach(name => {
+  const c = document.createElement("span");
+  c.className = "chip";
+  c.textContent = name;
+  c.style.borderColor = PEOPLE[name] + "66";
+  c.onclick = () => {
+    if (activePerson === name) { activePerson = null; setActive(allChip); }
+    else { activePerson = name; setActive(c); }
+    apply();
+  };
+  filters.appendChild(c);
+});
+[1,2,3].forEach(e => {
+  const c = document.createElement("span");
+  c.className = "chip era-chip";
+  c.textContent = ERAS[e];
+  c.dataset.era = e;
+  c.onclick = () => {
+    if (activePerson === "__era" + e) { activePerson = null; setActive(allChip); }
+    else { activePerson = "__era" + e; setActive(c); }
+    apply();
+  };
+  filters.appendChild(c);
+});
+function setActive(chip) {
+  filters.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+  chip.classList.add("active");
+}
+function apply() {
+  let shown = 0;
+  timeline.querySelectorAll(".event").forEach(d => {
+    const people = d.dataset.people.split(",");
+    const era = d.dataset.era;
+    let show = true;
+    if (activePerson && !activePerson.startsWith("__era")) show = people.includes(activePerson);
+    if (activePerson && activePerson.startsWith("__era")) show = era === activePerson.slice(5);
+    d.classList.toggle("hidden", !show);
+    if (show) shown++;
+  });
+  timeline.querySelectorAll(".era-head").forEach(h => {
+    const era = h.dataset.era;
+    const any = [...timeline.querySelectorAll(".event")].some(d => !d.classList.contains("hidden") && d.dataset.era === era);
+    h.classList.toggle("hidden", !any);
+  });
+  stats.textContent = activePerson ? `显示 ${shown} 条相关事件` : `共 ${EVENTS.length} 条事件`;
+}
+apply();
+</script>
+</body>
+</html>

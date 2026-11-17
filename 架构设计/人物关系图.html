@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《松风巷的女儿》人物关系图</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0e0f13; color:#d8d3c8; font-family:"Microsoft YaHei","PingFang SC",sans-serif; overflow:hidden; }
+  #app { display:flex; height:100vh; }
+  #stage { flex:1; position:relative; }
+  svg { width:100%; height:100%; cursor:grab; }
+  svg.dragging { cursor:grabbing; }
+  .edge { stroke:#3a3d4a; stroke-width:1.4; }
+  .edge-label { font-size:10px; fill:#8a8578; paint-order:stroke; stroke:#0e0f13; stroke-width:3px; }
+  .edge.blood { stroke:#c0392b; stroke-width:2.2; stroke-dasharray:7 4; }
+  .edge.hidden { display:none; }
+  .node rect { rx:16; fill:#1a1c24; stroke-width:1.6; cursor:pointer; }
+  .node text { text-anchor:middle; fill:#d8d3c8; font-size:13px; pointer-events:none; }
+  .node { cursor:pointer; }
+  .node.dim { opacity:.22; }
+  .edge.dim { opacity:.12; }
+  #panel { width:340px; background:#14161d; border-left:1px solid #262935; padding:22px; overflow-y:auto; }
+  #panel h2 { color:#e8b4b8; font-size:20px; margin-bottom:2px; }
+  #panel .role { color:#8a8578; font-size:12px; margin-bottom:14px; }
+  #panel .sec { margin-bottom:14px; }
+  #panel .sec b { color:#c9a0dc; font-size:12px; display:block; margin-bottom:4px; }
+  #panel .sec p { font-size:13px; line-height:1.8; color:#b8b2a4; }
+  #legend { position:absolute; top:14px; left:14px; background:rgba(20,22,29,.92); border:1px solid #262935; border-radius:8px; padding:10px 14px; font-size:12px; z-index:5; }
+  #legend .item { display:flex; align-items:center; gap:8px; margin:4px 0; cursor:pointer; color:#b8b2a4; }
+  #legend .dot { width:10px; height:10px; border-radius:50%; }
+  #legend .item:hover, #legend .item.active { color:#fff; }
+  #hint { position:absolute; bottom:12px; left:14px; font-size:11px; color:#5a5850; z-index:5; }
+  #resetBtn { position:absolute; top:14px; right:14px; background:#262935; color:#d8d3c8; border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-size:12px; z-index:5; }
+  #resetBtn:hover { background:#343848; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#343848; border-radius:3px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="legend"></div>
+    <button id="resetBtn">复位</button>
+    <div id="hint">拖拽移动人物 · 拖动空白处平移 · 滚轮缩放 · 点击人物查看设定 · 点击图例按阵营聚焦</div>
+    <svg id="svg"></svg>
+  </div>
+  <div id="panel"></div>
+</div>
+<script>
+const GROUPS = {
+  core:  { name:"核心女主",   color:"#e8b4b8" },
+  women: { name:"女主群（同出松风巷）", color:"#7fc8a9" },
+  men:   { name:"男主依附链", color:"#6f9ceb" },
+  allies:{ name:"闺蜜与谋士", color:"#c9a0dc" },
+  family:{ name:"家庭线·上一代", color:"#e0a458" },
+  next:  { name:"下一代",     color:"#f2d0a4" }
+};
+
+const NODES = [
+ {id:"sdm", name:"苏冬梅", g:"core", x:470, y:440, role:"核心女主 · 1993年生 · 全书唯一主视角", d:"动机只有一条：不再回到巷子里。手段只有一套：把美貌兑换成资源，把身边人兑换成成本。每次都算对了，每次都算漏了人心。她不是恶人，是把自保做到极致的人——极致到自保变成了自毁。终局：倾家荡产，异国打工，看清了所有人，却来不及看清自己。"},
+ {id:"lxm", name:"卢雪梅", g:"women", x:60, y:430, role:"圣女型 · 名字里同有一个梅字", d:"不争、不抢、不算计，被欺负了也不还手。圣不是道德优越，是近乎迟钝的善良。苏冬梅最看不起她，也最怕她——因为她的存在证明：不算计也能活。终局：被生活反复碾压却始终没变形。"},
+ {id:"ymj", name:"叶曼君", g:"women", x:80, y:320, role:"赢家型 · 镜像对手", d:"同样漂亮、精明、懂得兑换，但多一样东西：边界。知道什么能换、什么不能换。卷二明线竞争，她赢在从不把全部身家押上桌。终局：赢，但赢得不干净，也赢得不快乐。"},
+ {id:"lxm2", name:"林小满", g:"women", x:120, y:540, role:"出走型 · 全书的秤", d:"不说漂亮话，只做笨事：一碗热汤、一本账、一句人得先把自己当人。最早离开松风巷，也最早离开用自己换东西的逻辑。终局：唯一一个没有把自己弄丢的人。"},
+ {id:"cqt", name:"岑青桐", g:"women", x:70, y:220, role:"未来一代意见领袖 · 卷七出现", d:"年轻、清醒、锋利，下一代的话语掌握者。看苏冬梅，像看一个过时的标本。代表时间：苏冬梅那套话术，在新一代面前彻底失效。"},
+ {id:"ghs", name:"顾怀山", g:"men", x:700, y:450, role:"父辈型庇护者 · 卷一核心", d:"年长、有权、有丧妻之痛。给她的是她一生最缺的东西：长辈的庇护。回报是听话和别声张。丧妻后疏远她，不是良心发现，是怕。"},
+ {id:"qzw", name:"钱仲文", g:"men", x:830, y:530, role:"商人型 · 卷二核心", d:"旗袍、名片、酒桌、顶账。把她当成一件可增值也可折旧的资产。教会她最重要一课：在这个世界上，人可以被定价。"},
+ {id:"mks", name:"马库斯", g:"men", x:890, y:640, role:"卷四异国男友", d:"写成具体的人，不写成符号。有他的温柔，也有他的自私；他爱她，也消耗她。几度流产、丧失生育能力，是这段关系最具体的代价。跨国恋情只写两个人的相处，不作任何族群化描述。"},
+ {id:"xjp", name:"许家平", g:"men", x:770, y:740, role:"软善无力型 · 卷五六核心", d:"善良、软弱、孝顺、没有主见。苏冬梅接盘的对象，也是她唯一真正伤害到底的人。被净身出户，是全书最让人难受的一笔：好人被坏人用好人的名义毁掉。终局：一个人住，没再婚，从没在人前说过她一句坏话。"},
+ {id:"zsq", name:"周守青", g:"men", x:630, y:800, role:"痴情跟随者 · 卷一至卷七", d:"全书唯一一个无条件的人。不图回报，只图她好。苏冬梅一生都在利用他，也一生都不敢真正靠近他——因为他是唯一一个她算不清账的人。他早就看穿她，只是选择留下。"},
+ {id:"cj", name:"陈九", g:"men", x:500, y:830, role:"黄毛 · 原名陈六 · 唯一从头贯穿到尾", d:"五个姐姐凑钱给他买车买房，卡里的数字比写字楼里那件西装体面得多。所有人都以为他在底层，他其实比谁都宽裕。他是苏冬梅的同类：都从巷子里出来，区别是他从不掩饰自己是什么，她一辈子都在掩饰。她是生理性地喜欢他——这层喜欢她一次也没承认过。2037年死在日本，她最后一个同类没了。"},
+ {id:"jcw", name:"姜采薇", g:"allies", x:330, y:710, role:"谋士型闺蜜 · 卷一至卷三", d:"冷静、精准、擅长出主意。举报信的措辞与投递方式由她给出。与苏冬梅是共谋关系，也是随时可以切割的关系——卷三她第一个划清界限。她给刀。终局：升上去了，回忆录里没有苏冬梅这个名字。"},
+ {id:"wyl", name:"温以苓", g:"allies", x:450, y:740, role:"包装型闺蜜 · 卷五核心帮手", d:"设计履历、设计婚礼、设计海归精英的每一句话。她卖的是包装，收的是人情。与姜采薇的区别：姜采薇给刀，温以苓给妆。终局：包装人的生意越做越大，最后一个客户是自己。"},
+ {id:"jwt", name:"江晚棠", g:"allies", x:160, y:640, role:"校园行动派 · 卷一", d:"真诚、激烈、行动力强，苏冬梅第一次接触女性可以为自己争的观念来源。讽刺的是，苏冬梅从她那里学到的不是觉醒，是话术。"},
+ {id:"qyz", name:"祁予真", g:"allies", x:60, y:700, role:"标准受害者镜像 · 卷一", d:"真正的受害者。她的存在让读者看清：苏冬梅口中的受害，和真正的受害之间，隔着一整个良心。终局：活成一个普通人，已是胜利。"},
+ {id:"hjs", name:"韩秋实", g:"allies", x:230, y:770, role:"口头平权的男同学 · 卷一", d:"嘴上最进步，行动最缺席。对说漂亮话的男性版本讽刺，与苏冬梅互文：两个都擅长说，都不擅长做。"},
+ {id:"gxm", name:"顾小玫", g:"allies", x:290, y:590, role:"替身式镜像 · 卷一第20章起", d:"年轻版的苏冬梅。苏冬梅在她身上看见自己，也因此最恨她。终局：走上相似的路，重复她的错。"},
+ {id:"ch", name:"褚衡", g:"allies", x:580, y:720, role:"人设工业操盘手 · 卷五卷七推手", d:"专门替人做人设，把假的做成真的，把真的卖成贵的。苏冬梅的海外精英身份，有他一半功劳。终局：卖包装的人，从不缺客户。"},
+ {id:"zhl", name:"周惠兰", g:"family", x:380, y:150, role:"母亲 · 改嫁 · 中间人", d:"她要的是退路。她不是被夹在两个男人中间的可怜人，她是中间人：每月生活费留下一部分，攒成一本自己的存折。她是全书秘密的持有者——她算不清大女儿是谁的，这个不确定卡了她一辈子。手里握着三样东西：一本存折、一封信、一个姓。终局：2036年病逝外城，硬皮簿最后一页记的是外孙女的开销。"},
+ {id:"sdh", name:"苏德海", g:"family", x:540, y:70, role:"父亲 · 原县机关干部 · 苏冬梅的亲生父亲", d:"1996年冬天他算明白了：她是他的亲生女儿。他把这份清楚咽了三十年，一次也没拿出来当话说，从此再没抱过她。1999年因超生被开除公职，当年冬天南下，第二年出国。他一辈子没被起诉，也没坐过一天牢——牢是她给别人准备的。2038年隔着商场玻璃认出女儿，叫了一声梅梅，说：你瘦了。没有追出去——家里有人等他回去吃饭。"},
+ {id:"sws", name:"苏万山", g:"family", x:250, y:70, role:"祖父 · 老宅主人", d:"老宅留给谁这道题的最终裁决者。他要的是苏家有后四个字。他早就看出那个孙子不像苏家人，但他不说。手里握着老宅的房契，压在箱底，谁问都说以后再说。这辈子只说过一句狠话：房子姓苏，就还是苏家的。"},
+ {id:"xys", name:"徐远山", g:"family", x:140, y:160, role:"县运输公司司机 · 疑为女主生父（不是）", d:"想认，不敢确认，最后选了第三条路：不露面，只记账。孩子缺什么，他就往那个家里送什么，送得比一个父亲还准时，比一个陌生人还安静。一次学费、一次住院费、一次正好遇到的老乡。从不留名，也从不问。二十年后他把账交给律师：我不敢说她是我的，可那上面每一笔都是我的。她一生不知道他是谁。"},
+ {id:"sds2", name:"苏冬生", g:"family", x:560, y:210, role:"弟弟 · 1999年生 · 身世有隐情", d:"他要的是不问。不问，他就还是苏家的儿子。年年拿企业奖学金，却从没见过颁奖的人。姐姐从不叫他名字，只叫他——从十一岁叫到四十五岁。他到最后一页才通过遗嘱知道程永年是他父亲。他是全书最大的反讽：被偏爱的那个人，恰恰是最没有选择权的人。"},
+ {id:"cyn", name:"程永年", g:"family", x:700, y:60, role:"弟弟生父 · 全书最重要的隐形人", d:"南下做建材生意发财，从不露面，只以资助、奖学金、朋友帮忙的名义把钱送到苏冬生手里。二十年里他没去看过一眼。病重后口述遗嘱，把苏冬生的名字写进继承人一栏——只写名字，不写关系，不给理由。养，但不认。2033年被苏冬梅一纸材料送进监狱，判三年；狱中只问一句：那孩子怎么样。2037年死在疗养院，到死没能当面叫那个孩子一声。"},
+ {id:"dgn", name:"丁桂宁", g:"family", x:740, y:160, role:"弟媳 · 全员黑化里唯一还算干净的人", d:"她要的是走出去。嫁进来时图过老宅，也没那么干净，只是她不装。早留了后手：一本存折、一段录音。走的时候带走的还有孩子，钥匙放在桌上。她的离开，是全书最干净的一次转身。"},
+ {id:"sjh", name:"苏嘉禾", g:"next", x:880, y:80, role:"苏德海之子 · 2008年生于国外", d:"干净、克制、说话很稳，问问题像刀。不管苏家旧账，只管父亲的新账。卷七AI路演时对面的投资人就是他。她讲完，他只问一句：你为什么要做这个？她答不出来。散会后她觉得这个人眼熟——像一个人，想不起是谁。"},
+ {id:"cxj", name:"程雪见", g:"next", x:920, y:180, role:"程永年之女 · 1996年生 · 弟弟同父异母的姐姐", d:"父亲入狱三年，她一年两趟飞去隔着玻璃看他。处理父亲历史资产时与苏冬梅对峙；卷七拿出一份协议和一笔钱，请苏冬生签字放弃一切与程家有关的主张。她不是坏，她只是要把父亲留下的那个洞填上。"},
+ {id:"xwd", name:"徐卫东", g:"next", x:900, y:280, role:"徐远山之子 · 1995年生 · 可能的同母异父弟弟", d:"跟父亲一样跑长途。卷五她婚礼那天帮她搬嫁妆，喊她姐。全书唯一叫她姐的男人。他始终没问过那句你是不是我姐——他知道答案，他不敢要一个不肯认的父亲，也不敢要一个不肯认的姐姐。"},
+ {id:"zn", name:"周念", g:"next", x:790, y:360, role:"苏冬梅之女 · 2024年冬生于国外 · 姓周", d:"母亲把她抱走，外婆带大。十二岁回到母亲身边，母亲正忙着打官司、抵押房子。跟着母亲去异国，学会看人下菜、撒娇换东西，像极了她母亲十八岁。十六岁，在异国公交站问：我们什么时候能回去。听到一句：很快。"}
+];
+
+const EDGES = [
+ {a:"zhl", b:"sdm", label:"母女", cls:""},
+ {a:"sdh", b:"sdm", label:"亲生父亲 · 从未相认", cls:"blood"},
+ {a:"sdh", b:"zhl", label:"1999离婚 · 假鉴定", cls:""},
+ {a:"sws", b:"sdh", label:"父子 · 房契", cls:""},
+ {a:"xys", b:"zhl", label:"1992—93来往", cls:""},
+ {a:"xys", b:"sdm", label:"二十年无名资助 · 她不知是谁", cls:"blood"},
+ {a:"sds2", b:"sdm", label:"姐弟 · 她只叫他「他」", cls:""},
+ {a:"zhl", b:"sds2", label:"母子", cls:""},
+ {a:"cyn", b:"sds2", label:"生父 · 遗嘱才知", cls:"blood"},
+ {a:"cyn", b:"zhl", label:"1998冬来往 · 二十年索取", cls:""},
+ {a:"dgn", b:"sds2", label:"夫妻 · 干净离开", cls:""},
+ {a:"sdh", b:"sjh", label:"父子 · 国外再婚所生", cls:""},
+ {a:"xys", b:"xwd", label:"父子", cls:""},
+ {a:"cyn", b:"cxj", label:"父女", cls:""},
+ {a:"sdm", b:"zn", label:"母女 · 十二岁重逢", cls:""},
+ {a:"zhl", b:"zn", label:"外婆带大", cls:""},
+ {a:"sjh", b:"sdm", label:"路演投资人 · 不知是父女", cls:""},
+ {a:"cxj", b:"sdm", label:"对峙 · 买断苏冬生主张", cls:""},
+ {a:"xwd", b:"sdm", label:"婚礼喊「姐」", cls:""},
+ {a:"ghs", b:"sdm", label:"父辈庇护 · 卷一", cls:""},
+ {a:"qzw", b:"sdm", label:"定价与折旧 · 卷二", cls:""},
+ {a:"mks", b:"sdm", label:"异国依附 · 卷四", cls:""},
+ {a:"xjp", b:"sdm", label:"丈夫 · 净身出户", cls:""},
+ {a:"zsq", b:"sdm", label:"痴情跟随 · 她算不清的人", cls:""},
+ {a:"cj", b:"sdm", label:"同类 · 唯一生理性喜欢", cls:"blood"},
+ {a:"ymj", b:"sdm", label:"镜像对手", cls:""},
+ {a:"lxm", b:"sdm", label:"圣女对照", cls:""},
+ {a:"lxm2", b:"sdm", label:"全书的秤", cls:""},
+ {a:"cqt", b:"sdm", label:"新一代话语", cls:""},
+ {a:"jcw", b:"sdm", label:"给刀 · 卷三切割", cls:""},
+ {a:"wyl", b:"sdm", label:"给妆", cls:""},
+ {a:"jwt", b:"sdm", label:"觉醒观念来源（学成话术）", cls:""},
+ {a:"qyz", b:"sdm", label:"真受害者镜像", cls:""},
+ {a:"hjs", b:"sdm", label:"会说不会做的互文", cls:""},
+ {a:"gxm", b:"sdm", label:"年轻版镜像 · 最恨", cls:""},
+ {a:"ch", b:"sdm", label:"人设操盘", cls:""}
+];
+
+const svg = document.getElementById("svg");
+const NS = "http://www.w3.org/2000/svg";
+let view = {x:0, y:0, k:1};
+let selected = null, focusedGroup = null;
+
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+const edgeEls = [], nodeEls = {};
+EDGES.forEach(e => {
+  const g = el("g", {class:"edge-g"});
+  const line = el("line", {class:"edge " + (e.cls||"")});
+  const t = el("text", {class:"edge-label", "text-anchor":"middle"});
+  t.textContent = e.label;
+  g.appendChild(line); g.appendChild(t);
+  svg.appendChild(g);
+  edgeEls.push({e, line, t, g});
+});
+
+NODES.forEach(n => {
+  const g = el("g", {class:"node"});
+  const w = n.name.length * 16 + 26, h = 32;
+  const rect = el("rect", {x:-w/2, y:-h/2, width:w, height:h});
+  rect.style.fill = "#1a1c24";
+  rect.style.stroke = GROUPS[n.g].color;
+  const text = el("text", {y:5});
+  text.textContent = n.name;
+  g.appendChild(rect); g.appendChild(text);
+  svg.appendChild(g);
+  nodeEls[n.id] = {n, g, rect, text, w, h};
+});
+
+function render() {
+  edgeEls.forEach(({e, line, t}) => {
+    const A = nodeEls[e.a].n, B = nodeEls[e.b].n;
+    line.setAttribute("x1", A.x); line.setAttribute("y1", A.y);
+    line.setAttribute("x2", B.x); line.setAttribute("y2", B.y);
+    t.setAttribute("x", (A.x+B.x)/2); t.setAttribute("y", (A.y+B.y)/2 - 4);
+  });
+  Object.values(nodeEls).forEach(({n, g}) => {
+    g.setAttribute("transform", `translate(${n.x},${n.y})`);
+  });
+  svg.setAttribute("viewBox", `${view.x} ${view.y} ${1000/view.k} ${900/view.k}`);
+}
+
+function applyFilter() {
+  Object.values(nodeEls).forEach(({n, g}) => {
+    const dim = focusedGroup && n.g !== focusedGroup && n.g !== "core";
+    g.classList.toggle("dim", dim);
+  });
+  edgeEls.forEach(({e, g}) => {
+    const a = nodeEls[e.a].n, b = nodeEls[e.b].n;
+    const dim = focusedGroup && a.g !== focusedGroup && b.g !== focusedGroup && a.g !== "core" && b.g !== "core";
+    g.classList.toggle("dim", dim);
+  });
+}
+
+// ---- 拖拽节点 / 平移 / 缩放 ----
+let dragNode = null, panning = false, last = null, downScreen = {x:0, y:0};
+function svgPoint(evt) {
+  const r = svg.getBoundingClientRect();
+  return {
+    x: view.x + (evt.clientX - r.left) / r.width * 1000 / view.k,
+    y: view.y + (evt.clientY - r.top) / r.height * 900 / view.k
+  };
+}
+svg.addEventListener("pointerdown", evt => {
+  const t = evt.target.closest(".node");
+  last = svgPoint(evt);
+  lastScreen = {x: evt.clientX, y: evt.clientY};
+  downScreen = {x: evt.clientX, y: evt.clientY};
+  if (t) {
+    for (const k in nodeEls) if (nodeEls[k].g === t) dragNode = k;
+    svg.setPointerCapture(evt.pointerId);
+  } else {
+    panning = true;
+    svg.classList.add("dragging");
+    svg.setPointerCapture(evt.pointerId);
+  }
+});
+svg.addEventListener("pointermove", evt => {
+  if (!last) return;
+  const p = svgPoint(evt);
+  if (dragNode) {
+    nodeEls[dragNode].n.x = p.x;
+    nodeEls[dragNode].n.y = p.y;
+  } else if (panning) {
+    const r = svg.getBoundingClientRect();
+    view.x -= (evt.clientX - lastScreen.x) / r.width * 1000 / view.k;
+    view.y -= (evt.clientY - lastScreen.y) / r.height * 900 / view.k;
+  }
+  lastScreen = {x: evt.clientX, y: evt.clientY};
+  render();
+});
+let lastScreen = {x:0, y:0};
+svg.addEventListener("pointerup", evt => {
+  if (dragNode && Math.hypot(evt.clientX - downScreen.x, evt.clientY - downScreen.y) < 4) selectNode(dragNode);
+  dragNode = null; panning = false; last = null;
+  svg.classList.remove("dragging");
+});
+svg.addEventListener("wheel", evt => {
+  evt.preventDefault();
+  const r = svg.getBoundingClientRect();
+  const mx = view.x + (evt.clientX - r.left) / r.width * 1000 / view.k;
+  const my = view.y + (evt.clientY - r.top) / r.height * 900 / view.k;
+  const k2 = Math.min(4, Math.max(.4, view.k * (evt.deltaY < 0 ? 1.12 : .89)));
+  view.x = mx - (mx - view.x) * view.k / k2;
+  view.y = my - (my - view.y) * view.k / k2;
+  view.k = k2;
+  render();
+}, {passive:false});
+
+// ---- 详情面板 ----
+const panel = document.getElementById("panel");
+function selectNode(id) {
+  selected = id;
+  const n = nodeEls[id].n;
+  const g = GROUPS[n.g];
+  panel.innerHTML = `
+    <h2 style="color:${g.color}">${n.name}</h2>
+    <div class="role">${n.role}</div>
+    <div class="sec"><b>人物设定</b><p>${n.d}</p></div>
+    <div class="sec"><b>直接关系</b><p>${EDGES.filter(e => e.a === id || e.b === id)
+      .map(e => {
+        const other = nodeEls[e.a === id ? e.b : e.a].n.name;
+        return `${other}（${e.label}）`;
+      }).join("；")}</p></div>`;
+  // 高亮该节点相关
+  Object.values(nodeEls).forEach(({n: nn, g: gg}) => {
+    gg.classList.toggle("dim", nn.id !== id && !EDGES.some(e => (e.a===id&&e.b===nn.id)||(e.b===id&&e.a===nn.id)));
+  });
+  edgeEls.forEach(({e, g: gg}) => {
+    gg.classList.toggle("dim", e.a !== id && e.b !== id);
+  });
+}
+panel.innerHTML = `<h2 style="color:#e8b4b8">苏冬梅的世界</h2><div class="role">《松风巷的女儿》人物关系图</div>
+  <div class="sec"><b>读法</b><p>红色虚线是血缘——三条血缘线全部是错的或迟的：亲生父亲从未相认，二十年给钱的人她不知道是谁，弟弟的生父到遗嘱才落地。</p></div>
+  <div class="sec"><b>提示</b><p>点击任意人物查看设定与关系；点击左上角阵营名可聚焦；拖拽人物调整布局；滚轮缩放。</p></div>`;
+
+// ---- 图例 ----
+const legend = document.getElementById("legend");
+Object.entries(GROUPS).forEach(([k, v]) => {
+  const item = document.createElement("div");
+  item.className = "item";
+  item.innerHTML = `<span class="dot" style="background:${v.color}"></span>${v.name}`;
+  item.onclick = () => {
+    if (focusedGroup === k) { focusedGroup = null; item.classList.remove("active"); }
+    else {
+      focusedGroup = k;
+      legend.querySelectorAll(".item").forEach(i => i.classList.remove("active"));
+      item.classList.add("active");
+    }
+    applyFilter();
+    if (!focusedGroup) { panel.innerHTML = `<h2 style="color:#e8b4b8">苏冬梅的世界</h2><div class="role">《松风巷的女儿》人物关系图</div>`; }
+  };
+  legend.appendChild(item);
+});
+
+document.getElementById("resetBtn").onclick = () => {
+  view = {x:0, y:0, k:1};
+  NODES.forEach(n => { const o = nodeEls[n.id]; o.n.x = n.x; o.n.y = n.y; });
+  focusedGroup = null; selected = null;
+  legend.querySelectorAll(".item").forEach(i => i.classList.remove("active"));
+  applyFilter();
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
