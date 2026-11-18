@@ -5,7 +5,7 @@
 依赖：google-cloud-texttospeech（REST 直连，仅需凭据文件）、requests、ffmpeg（PATH）。
 网络：需经本地代理访问 Google 端点（PROXY），凭据见 KEY_PATH。
 输入：配音标注稿（每段一行，行首 [角色代码]，代码见 VOICES）。
-输出：音频/卷一/第NNN章_章名.mp3 + 同名 .lrc
+输出：章节/卷X_卷名/第NNN章_章名/第NNN章_章名.mp3
 """
 import base64
 import asyncio
@@ -154,15 +154,7 @@ def main(script_path: Path, out_path: Path) -> None:
             if k % 20 == 0:
                 print(f"  已完成 {k}/{len(segs)}")
 
-    print("分段语音完成，探测时长…")
-    durs = []
-    for i in range(len(segs)):
-        p = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-             "-of", "default=nw=1:nk=1", str(work / f"{i:04d}.mp3")],
-            capture_output=True, text=True, encoding="utf-8", errors="replace")
-        durs.append(float(p.stdout.strip()))
-
+    print("分段语音完成，拼接…")
     gap = work / "gap.mp3"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
                     "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
@@ -180,20 +172,6 @@ def main(script_path: Path, out_path: Path) -> None:
                     "-f", "concat", "-safe", "0", "-i", str(list_file),
                     "-c:a", "libmp3lame", "-q:a", "4", str(out_path)], check=True)
 
-    def fmt(t: float) -> str:
-        ms = int(round(t * 1000))
-        h, ms = divmod(ms, 3600_000)
-        m, ms = divmod(ms, 60_000)
-        s, ms = divmod(ms, 1000)
-        return f"{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
-
-    lrc_lines = [f"[{fmt(0.0)}]《松风巷的女儿》· {out_path.stem}"]
-    cursor = 0.0
-    for (code, text), d in zip(segs, durs):
-        cursor += d + GAP_SEC
-        lrc_lines.append(f"[{fmt(cursor)}]{text}")
-    out_path.with_suffix(".lrc").write_text("\n".join(lrc_lines) + "\n", encoding="utf-8")
-
     shutil.rmtree(work, ignore_errors=True)
     probe = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -203,10 +181,18 @@ def main(script_path: Path, out_path: Path) -> None:
     print(f"完成 → {out_path}（{int(secs // 60)}分{int(secs % 60):02d}秒）")
 
 
+def find_chapter_dir(ch: str) -> Path:
+    """章节/卷X_卷名/第NNN章_章名/ 中定位章节目录。"""
+    hits = sorted((BASE / "章节").glob(f"*/{ch}_*"))
+    if not hits:
+        raise FileNotFoundError(f"章节目录不存在：章节/*/ {ch}_*")
+    return hits[0]
+
+
 if __name__ == "__main__":
     script = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE / "资料" / "配音稿_第001章.txt"
     stem = script.stem.replace("配音稿_", "")
     ch = stem.split("_")[0] if "_" in stem else stem
-    name = TITLE_MAP.get(ch, ch)
-    out = BASE / "音频" / "卷一" / f"{name}.mp3"
+    chdir = find_chapter_dir(ch)
+    out = chdir / f"{chdir.name}.mp3"
     main(script, out)

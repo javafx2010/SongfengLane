@@ -4,7 +4,7 @@
 用法：python 资料/make_gptsovits_audio.py 资料/配音稿_第001章.txt
 依赖：GPT-SoVITS api_v2 服务已启动（127.0.0.1:9880，--no-auto-load 时可热切权重）、ffmpeg。
 输入：配音标注稿（每段一行，行首 [角色代码]，代码见 ROLE2VOICE）。
-输出：音频/卷一/第NNN章_章名.mp3 + 同名 .lrc（按脚本原顺序拼接）。
+输出：章节/卷X_卷名/第NNN章_章名/第NNN章_章名.mp3（按脚本原顺序拼接）。
 特性：按角色分组请求（同一角色只切换一次模型权重）；断点续跑（分段缓存）。
 """
 import json
@@ -148,7 +148,6 @@ def main(script_path: Path, out_path: Path) -> None:
             print(f"[{code}] {alias}：已缓存，跳过")
 
     print("拼接音频…")
-    durs = [probe(work / f"{i:04d}.wav") for i in range(len(segs))]
     list_file = work / "list.txt"
     list_file.write_text(
         "\n".join(f"file '{(work / f'{i:04d}.wav').as_posix()}'" for i in range(len(segs))),
@@ -158,20 +157,6 @@ def main(script_path: Path, out_path: Path) -> None:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
                     "-f", "concat", "-safe", "0", "-i", str(list_file),
                     "-c:a", "libmp3lame", "-q:a", "4", str(out_path)], check=True)
-
-    def fmt(t: float) -> str:
-        ms = int(round(t * 1000))
-        h, ms = divmod(ms, 3600_000)
-        m, ms = divmod(ms, 60_000)
-        s, ms = divmod(ms, 1000)
-        return f"{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
-
-    lrc_lines = [f"[{fmt(0.0)}]《松风巷的女儿》· {out_path.stem}"]
-    cursor = 0.0
-    for (code, text), d in zip(segs, durs):
-        cursor += d + GAP_SEC
-        lrc_lines.append(f"[{fmt(cursor)}]{text}")
-    out_path.with_suffix(".lrc").write_text("\n".join(lrc_lines) + "\n", encoding="utf-8")
 
     secs = probe(out_path)
     print(f"完成 → {out_path}（{int(secs // 60)}分{int(secs % 60):02d}秒，分段缓存保留在 {work}）")
