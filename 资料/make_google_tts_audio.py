@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Google Cloud TTS 分角色配音合成脚本（可复用于全书各章）。
+"""分角色配音合成脚本（旁白/苏冬梅=Edge-TTS，其余=Google Chirp 3 HD）。可复用于全书各章。
 
-用法：python 资料/make_google_tts_audio.py 资料/配音稿_第001章.txt
-依赖：google-cloud-texttospeech（REST 直连，仅需凭据文件）、requests、ffmpeg（PATH）。
-网络：需经本地代理访问 Google 端点（PROXY），凭据见 KEY_PATH。
-输入：配音标注稿（每段一行，行首 [角色代码]，代码见 VOICES）。
+用法：
+  python 资料/make_google_tts_audio.py 资料/配音稿_第001章.txt          # 全章合成
+  python 资料/make_google_tts_audio.py --probe                          # 仅探测各 Chirp 3 音色可用性
+依赖：google-cloud-texttospeech 凭据、requests、edge-tts、ffmpeg（PATH）。
+网络：Google 端点需经本地代理（PROXY），凭据见 KEY_PATH。
+输入：配音标注稿（每段一行，行首 [角色代码]，代码见 EDGE/VOICES）。
 输出：章节/卷X_卷名/第NNN章_章名/第NNN章_章名.mp3
 """
 import base64
 import asyncio
 import concurrent.futures as cf
-import re
 import shutil
 import subprocess
 import sys
@@ -28,25 +29,27 @@ PROXY = "http://127.0.0.1:7890"
 API = "https://texttospeech.googleapis.com/v1/text:synthesize"
 SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
 
-# Edge-TTS 角色 → (音色, rate, pitch)。N 旁白小艺（少女），S 苏冬梅晓晓（童声感升调）。
+# Edge-TTS 角色 → (音色, rate, pitch)。N 旁白小艺，S 苏冬梅晓晓（童声感升调）。语速一律默认。
 EDGE = {
-    "N": ("zh-CN-XiaoyiNeural",  "-5%", None),
-    "S": ("zh-CN-XiaoxiaoNeural", "+8%", "+20Hz"),
+    "N": ("zh-CN-XiaoyiNeural",   None, None),
+    "S": ("zh-CN-XiaoxiaoNeural", None, "+20Hz"),
 }
-# 其余角色 → Google cmn-CN Wavenet/Standard（name, rate, pitch）。
+# 其余角色 → Google Chirp 3 HD（cmn-CN-Chirp3-HD-*，name, rate）。语速一律 1.0，不做快慢处理。
+# 注：Chirp 3 不保证支持 pitch；rate 由 audioConfig.speakingRate 控制，
+# 若服务端报 400 则自动降级为不带 audioConfig 重试。
 VOICES = {
-    "M": ("cmn-CN-Wavenet-C",   0.92,  -2),  # 母亲周惠兰
-    "F": ("cmn-CN-Wavenet-B",   0.92,  -2),  # 父亲苏德海
-    "P": ("cmn-CN-Standard-A",  1.00,  10),  # 胖丫
-    "Q": ("cmn-CN-Standard-C",  0.95,   0),  # 琴课老师
-    "O": ("cmn-CN-Standard-D",  0.88,  -6),  # 老校长/老头/远房/师傅
-    "W": ("cmn-CN-Wavenet-A",   1.00,   0),  # 女群杂
-    "K": ("cmn-CN-Standard-B",  0.90,  -4),  # 单位客人
+    "M": ("cmn-CN-Chirp3-HD-Gacrux",  1.00),  # 母亲周惠兰（女，偏年长）
+    "F": ("cmn-CN-Chirp3-HD-Charon",  1.00),  # 父亲苏德海（男，沉稳）
+    "P": ("cmn-CN-Chirp3-HD-Kore",    1.00),  # 胖丫（女，明快）
+    "Q": ("cmn-CN-Chirp3-HD-Zephyr",  1.00),  # 琴课老师（女，清亮）
+    "O": ("cmn-CN-Chirp3-HD-Iapetus", 1.00),  # 老校长/老关头/老张头/白医生（男，偏老）
+    "W": ("cmn-CN-Chirp3-HD-Leda",    1.00),  # 女群杂
+    "K": ("cmn-CN-Chirp3-HD-Orus",    1.00),  # 单位客人（男，中年）
 }
 
 GAP_SEC = 0.45
 BASE = Path(__file__).resolve().parent.parent
-TITLE_MAP = {"第001章": "第001章_一九九八年的夏天"}
+PROBE_TEXT = "今天是个好日子。"
 
 
 def get_credentials():
@@ -73,8 +76,10 @@ def parse_script(path: Path):
 EDGE_SEM = threading.BoundedSemaphore(2)
 
 
-async def _edge_once(text: str, voice: str, rate: str, pitch) -> bytes:
-    kw = {"rate": rate}
+async def _edge_once(text: str, voice: str, rate, pitch) -> bytes:
+    kw = {}
+    if rate:
+        kw["rate"] = rate
     if pitch:
         kw["pitch"] = pitch
     com = edge_tts.Communicate(text, voice, **kw)
@@ -92,41 +97,65 @@ def synth_edge(text: str, voice: str, rate: str, pitch) -> bytes:
         for attempt in range(6):
             try:
                 return asyncio.run(_edge_once(text, voice, rate, pitch))
-            except Exception as e:
+            except Exception:
                 if attempt == 5:
                     raise
                 time.sleep(3 + 3 * attempt)
+
+
+def _post(session, token, body):
+    return session.post(
+        API, json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        proxies={"https": PROXY, "http": PROXY},
+        timeout=90,
+    )
+
+
+def synth_google(session, token, text, voice_name, rate):
+    body = {
+        "input": {"text": text},
+        "voice": {"languageCode": "cmn-CN", "name": voice_name},
+        "audioConfig": {"audioEncoding": "MP3", "speakingRate": rate},
+    }
+    for attempt in range(5):
+        try:
+            r = _post(session, token, body)
+            if r.ok:
+                return base64.b64decode(r.json()["audioContent"])
+            if r.status_code == 400 and "audioConfig" in body:
+                # Chirp 3 可能不接受 speakingRate → 降级重试
+                body = {"input": body["input"], "voice": body["voice"]}
+                continue
+            if r.status_code in (429, 500, 503):
+                time.sleep(2 * (attempt + 1))
+                continue
+            raise RuntimeError(f"TTS API {r.status_code}: {r.text[:300]}")
+        except requests.RequestException:
+            if attempt == 4:
+                raise
+            time.sleep(2 * (attempt + 1))
+    raise RuntimeError("合成失败")
 
 
 def synth_one(session, token, code, text) -> bytes:
     if code in EDGE:
         v, r, p = EDGE[code]
         return synth_edge(text, v, r, p)
-    voice, rate, pitch = VOICES[code]
-    body = {
-        "input": {"text": text},
-        "voice": {"languageCode": "cmn-CN", "name": voice},
-        "audioConfig": {"audioEncoding": "MP3", "speakingRate": rate, "pitch": pitch},
-    }
-    for attempt in range(4):
+    voice, rate = VOICES[code]
+    return synth_google(session, token, text, voice, rate)
+
+
+def probe():
+    """逐个探测 Chirp 3 音色可用性。"""
+    creds = get_credentials()
+    session = requests.Session()
+    for code, (voice, rate) in VOICES.items():
         try:
-            r = session.post(
-                API, json=body,
-                headers={"Authorization": f"Bearer {token}"},
-                proxies={"https": PROXY, "http": PROXY},
-                timeout=90,
-            )
-            if r.ok:
-                return base64.b64decode(r.json()["audioContent"])
-            if r.status_code in (429, 500, 503):
-                time.sleep(2 * (attempt + 1))
-                continue
-            raise RuntimeError(f"TTS API {r.status_code}: {r.text[:200]}")
-        except requests.RequestException:
-            if attempt == 3:
-                raise
-            time.sleep(2 * (attempt + 1))
-    raise RuntimeError("合成失败")
+            data = synth_google(session, creds.token, PROBE_TEXT, voice, rate)
+            print(f"[OK] {code} {voice}  ({len(data)} bytes, rate={rate})")
+        except Exception as e:
+            print(f"[FAIL] {code} {voice}  {e}")
 
 
 def main(script_path: Path, out_path: Path) -> None:
@@ -173,11 +202,11 @@ def main(script_path: Path, out_path: Path) -> None:
                     "-c:a", "libmp3lame", "-q:a", "4", str(out_path)], check=True)
 
     shutil.rmtree(work, ignore_errors=True)
-    probe = subprocess.run(
+    probe_out = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
          "-of", "default=nw=1:nk=1", str(out_path)],
         capture_output=True, text=True, encoding="utf-8", errors="replace")
-    secs = float(probe.stdout.strip() or 0)
+    secs = float(probe_out.stdout.strip() or 0)
     print(f"完成 → {out_path}（{int(secs // 60)}分{int(secs % 60):02d}秒）")
 
 
@@ -190,6 +219,9 @@ def find_chapter_dir(ch: str) -> Path:
 
 
 if __name__ == "__main__":
+    if "--probe" in sys.argv:
+        probe()
+        sys.exit(0)
     script = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE / "资料" / "配音稿_第001章.txt"
     stem = script.stem.replace("配音稿_", "")
     ch = stem.split("_")[0] if "_" in stem else stem
